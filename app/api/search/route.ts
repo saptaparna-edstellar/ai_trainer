@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, profiles: [] });
     }
 
-    // Only filter with Groq if we have enough profiles — avoids filtering 2 down to 0
-    const profiles = rawProfiles.length >= 5
+    // Only filter with Groq if we have enough profiles — avoids filtering few results down to 0
+    const profiles = rawProfiles.length >= 10
       ? await filterCandidates({ profiles: rawProfiles, requirements: body })
       : rawProfiles;
 

@@ -46,21 +46,23 @@ export async function filterCandidates({
   const trimmed = profiles;
 
   const prompt = `
-You are a recruiter AI. Filter these LinkedIn profiles and return only trainers who match the requirements.
+You are a recruiter AI helping an operations team source trainers from LinkedIn.
+
+From the profiles below, return up to 20 profiles that are relevant to the requirements.
+Be generous — include anyone who could reasonably be a trainer in this area.
+Only exclude profiles that are CLEARLY unrelated (e.g. a pure software developer with no training role at all).
 
 Requirements:
-- Must be a trainer (not a developer, engineer, or non-trainer role)
-- Required skills: ${requirements.skills?.join(", ")}
+- Role: trainer, instructor, coach, or anyone who trains others
+- Skills area: ${requirements.skills?.join(", ")}
 ${requirements.experience ? `- Experience: ${requirements.experience}` : ""}
 ${requirements.location ? `- Location: ${requirements.location}` : ""}
 ${requirements.industry ? `- Industry: ${requirements.industry}` : ""}
 
-Use the skills array and experience titles to verify the match. Use location to verify city.
-
 Profiles:
 ${JSON.stringify(trimmed, null, 2)}
 
-Return a valid JSON array of matching profiles:
+Return a valid JSON array of up to 20 matching profiles:
 [{"title": "...", "url": "...", "description": "..."}]
 
 Return ONLY the JSON array. No explanation. No markdown.
