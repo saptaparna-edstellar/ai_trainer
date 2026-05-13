@@ -40,6 +40,8 @@ export async function searchLinkedInProfiles(data: any) {
     const skills = (data.skills as string[]).filter(Boolean);
     const location = data.location || "";
     const industry = data.industry || "";
+    const experience = data.experience || "";
+    const keywords = data.keywords || "";
 
     const jobTitles = skills.length
       ? await generateJobTitles(skills)
@@ -47,21 +49,24 @@ export async function searchLinkedInProfiles(data: any) {
 
     console.log("LLM GENERATED JOB TITLES:", jobTitles);
 
-    // Query 1: skills + LLM-generated trainer job titles + location
+    // Query 1: skills + job titles + location + industry + experience (primary)
     const query1 = [
       "site:linkedin.com/in/",
       ...skills,
       `(${jobTitles.join(" OR ")})`,
       location,
       industry,
+      experience,
     ].filter(Boolean).join(" ");
 
-    // Query 2: simple broad query — trainer + skills + location
+    // Query 2: broad fallback — trainer + skills + location + industry + keywords
     const query2 = [
       "site:linkedin.com/in/",
       "trainer",
       ...skills,
       location,
+      industry,
+      keywords,
     ].filter(Boolean).join(" ");
 
     // Run both queries in parallel for more results
