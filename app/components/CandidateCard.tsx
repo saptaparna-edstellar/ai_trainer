@@ -4,8 +4,8 @@ export default function CandidateCard({
   candidate,
 }: any) {
   return (
-    <div className="bg-white p-5 rounded-xl shadow border space-y-2">
-      <h2 className="text-xl font-bold">
+    <div className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-indigo-500 space-y-2 hover:shadow-lg transition-shadow">
+      <h2 className="text-xl font-bold text-indigo-800">
         {candidate.title}
       </h2>
 
@@ -26,7 +26,7 @@ export default function CandidateCard({
           {candidate.skills.map((skill: string, i: number) => (
             <span
               key={i}
-              className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full"
+              className="bg-indigo-50 text-indigo-700 text-xs px-2 py-1 rounded-full border border-indigo-200"
             >
               {skill}
             </span>
@@ -37,7 +37,7 @@ export default function CandidateCard({
       <a
         href={candidate.url}
         target="_blank"
-        className="text-blue-500 font-medium text-sm block pt-1"
+        className="inline-block mt-1 bg-indigo-600 hover:bg-purple-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
       >
         Open LinkedIn Profile
       </a>

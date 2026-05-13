@@ -60,12 +60,12 @@ export default function SearchForm() {
     <div className="space-y-8">
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 bg-white p-6 rounded-xl shadow"
+        className="space-y-4 bg-white p-6 rounded-2xl shadow-lg border border-indigo-100"
       >
         <input
           type="text"
           placeholder="Skills"
-          className="border p-3 w-full rounded-lg"
+          className="border border-gray-200 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent bg-gray-50"
           value={formData.skills}
           onChange={(e) =>
             setFormData({
@@ -78,7 +78,7 @@ export default function SearchForm() {
         <input
           type="text"
           placeholder="Experience"
-          className="border p-3 w-full rounded-lg"
+          className="border border-gray-200 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent bg-gray-50"
           value={formData.experience}
           onChange={(e) =>
             setFormData({
@@ -91,7 +91,7 @@ export default function SearchForm() {
         <input
           type="text"
           placeholder="Location"
-          className="border p-3 w-full rounded-lg"
+          className="border border-gray-200 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent bg-gray-50"
           value={formData.location}
           onChange={(e) =>
             setFormData({
@@ -104,7 +104,7 @@ export default function SearchForm() {
         <input
           type="text"
           placeholder="Keywords"
-          className="border p-3 w-full rounded-lg"
+          className="border border-gray-200 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent bg-gray-50"
           value={formData.keywords}
           onChange={(e) =>
             setFormData({
@@ -117,7 +117,7 @@ export default function SearchForm() {
         <input
           type="text"
           placeholder="Industry"
-          className="border p-3 w-full rounded-lg"
+          className="border border-gray-200 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent bg-gray-50"
           value={formData.industry}
           onChange={(e) =>
             setFormData({
@@ -130,7 +130,7 @@ export default function SearchForm() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-black text-white px-5 py-3 rounded-lg w-full"
+          className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-3 rounded-lg w-full font-semibold transition-all shadow-md disabled:opacity-60"
         >
           {loading
             ? "Searching..."

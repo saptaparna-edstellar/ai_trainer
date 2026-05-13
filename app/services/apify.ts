@@ -5,6 +5,28 @@ const client = new ApifyClient({
   token: process.env.APIFY_TOKEN,
 });
 
+function experienceToSearchTerm(experience: string): string {
+  if (!experience) return "";
+  const lower = experience.toLowerCase().trim();
+
+  // Fresher / 0 years
+  if (lower === "0" || lower === "0 years" || /^fresh/i.test(lower)) {
+    return "(fresher OR \"entry level\" OR \"junior trainer\")";
+  }
+
+  // Extract number of years
+  const num = parseInt(lower);
+  if (!isNaN(num)) {
+    if (num <= 2)  return "(junior OR associate trainer)";
+    if (num <= 5)  return "(experienced trainer)";
+    if (num <= 10) return "(senior trainer OR experienced)";
+    return "(expert trainer OR senior trainer)";
+  }
+
+  // If user typed something descriptive like "senior", pass it through
+  return experience;
+}
+
 async function runGoogleSearch(query: string): Promise<any[]> {
   console.log("GOOGLE QUERY:", query);
 
@@ -40,7 +62,7 @@ export async function searchLinkedInProfiles(data: any) {
     const skills = (data.skills as string[]).filter(Boolean);
     const location = data.location || "";
     const industry = data.industry || "";
-    const experience = data.experience || "";
+    const experienceTerm = experienceToSearchTerm(data.experience || "");
     const keywords = data.keywords || "";
 
     const jobTitles = skills.length
@@ -56,7 +78,7 @@ export async function searchLinkedInProfiles(data: any) {
       `(${jobTitles.join(" OR ")})`,
       location,
       industry,
-      experience,
+      experienceTerm,
     ].filter(Boolean).join(" ");
 
     // Query 2: broad fallback — trainer + skills + location + industry + keywords
