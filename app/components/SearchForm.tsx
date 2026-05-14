@@ -75,10 +75,8 @@ export default function SearchForm() {
           }
         />
 
-        <input
-          type="text"
-          placeholder="Experience"
-          className="border border-gray-200 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent bg-gray-50"
+        <select
+          className="border border-gray-200 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent bg-gray-50 text-gray-700"
           value={formData.experience}
           onChange={(e) =>
             setFormData({
@@ -86,7 +84,13 @@ export default function SearchForm() {
               experience: e.target.value,
             })
           }
-        />
+        >
+          <option value="">Any Experience</option>
+          <option value="fresher">Fresher (0–1 years)</option>
+          <option value="5+">5+ years</option>
+          <option value="10+">10+ years</option>
+          <option value="20+">20+ years</option>
+        </select>
 
         <input
           type="text"

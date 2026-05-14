@@ -1,30 +1,23 @@
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-const client = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export async function generateJobTitles(skills: string[]): Promise<string[]> {
-  const prompt = `
-You are a LinkedIn recruiter. Given these skills, return a JSON array of LinkedIn job titles that a TRAINER specializing in these skills would typically have on their profile.
-
-Skills: ${skills.join(", ")}
-
-Rules:
-- Only include trainer/instructor/coach related titles
-- Include 5 to 8 realistic LinkedIn job titles
-- Return ONLY a JSON array of strings like: ["Title 1", "Title 2"]
-- No explanation, no markdown
-`;
-
-  const completion = await client.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.3,
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 200,
+    messages: [
+      {
+        role: "user",
+        content: `List 6 LinkedIn job titles for a trainer who teaches: ${skills.join(", ")}.
+Return ONLY a JSON array like: ["Title 1", "Title 2"]. No explanation.`,
+      },
+    ],
   });
 
-  const content = completion.choices[0].message.content || '["Trainer"]';
+  const content = message.content[0].type === "text" ? message.content[0].text : "";
   const match = content.match(/\[[\s\S]*\]/);
   if (!match) return ["Trainer"];
   try {
@@ -42,43 +35,50 @@ export async function filterCandidates({
   profiles: any[];
   requirements: any;
 }) {
-  // Data is already trimmed at source in apify.ts — pass through as-is
-  const trimmed = profiles;
+  const criteria = [
+    `Skills: ${requirements.skills?.join(", ")}`,
+    requirements.experience ? `Experience: ${requirements.experience} years in training (match if profile shows AT LEAST this much experience)` : "",
+    requirements.location ? `Location: ${requirements.location}` : "",
+    requirements.industry ? `Industry: ${requirements.industry}` : "",
+    requirements.keywords ? `Keywords: ${requirements.keywords}` : "",
+  ].filter(Boolean).join("\n");
 
-  const prompt = `
-You are a recruiter AI helping an operations team source trainers from LinkedIn.
-
-From the profiles below, return up to 20 profiles that are relevant to the requirements.
-Be generous — include anyone who could reasonably be a trainer in this area.
-Only exclude profiles that are CLEARLY unrelated (e.g. a pure software developer with no training role at all).
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 3000,
+    messages: [
+      {
+        role: "user",
+        content: `You are a recruiter scoring LinkedIn trainer profiles.
 
 Requirements:
-- Role: trainer, instructor, coach, or anyone who trains others
-- Skills area: ${requirements.skills?.join(", ")}
-${requirements.experience ? `- Experience: ${requirements.experience}` : ""}
-${requirements.location ? `- Location: ${requirements.location}` : ""}
-${requirements.industry ? `- Industry: ${requirements.industry}` : ""}
+${criteria}
+
+Score each profile (0-9) based on how many criteria match from the profile title/description:
+- Skills match: +3 points
+- Location match: +2 points
+- Experience level match: +2 points
+- Industry match: +1 point
+- Keywords match: +1 point
+
+Rules:
+- Only include trainers, instructors, coaches, facilitators — exclude pure developers/engineers with no training role
+- Return up to 20 profiles sorted by score descending (best match first)
 
 Profiles:
-${JSON.stringify(trimmed, null, 2)}
+${JSON.stringify(profiles, null, 2)}
 
-Return a valid JSON array of up to 20 matching profiles:
-[{"title": "...", "url": "...", "description": "..."}]
-
-Return ONLY the JSON array. No explanation. No markdown.
-`;
-
-  const completion = await client.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.1,
+Return ONLY a JSON array sorted by score: [{"title": "...", "url": "...", "description": "...", "score": 7}]`,
+      },
+    ],
   });
 
-  const content = completion.choices[0].message.content || "[]";
+  const content = message.content[0].type === "text" ? message.content[0].text : "[]";
   const match = content.match(/\[[\s\S]*\]/);
   if (!match) return [];
   try {
-    return JSON.parse(match[0]);
+    const parsed = JSON.parse(match[0]);
+    return Array.isArray(parsed) ? parsed.sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0)) : [];
   } catch {
     return [];
   }
@@ -91,31 +91,23 @@ export async function analyzeCandidate({
   candidate: any;
   requirements: any;
 }) {
-  const prompt = `
-You are an AI trainer.
-
-Candidate:
-${JSON.stringify(candidate)}
-
-Requirements:
-${JSON.stringify(requirements)}
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 500,
+    messages: [
+      {
+        role: "user",
+        content: `Candidate: ${JSON.stringify(candidate)}
+Requirements: ${JSON.stringify(requirements)}
 
 Return:
 1. Match Score out of 100
 2. Short Summary
 3. Missing Skills
-4. Strengths
-`;
-
-  const completion = await client.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-    messages: [
-      {
-        role: "user",
-        content: prompt,
+4. Strengths`,
       },
     ],
-    temperature: 0.3,
   });
-  return completion.choices[0].message.content;
+
+  return message.content[0].type === "text" ? message.content[0].text : "";
 }

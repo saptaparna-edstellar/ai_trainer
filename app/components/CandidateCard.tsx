@@ -5,9 +5,20 @@ export default function CandidateCard({
 }: any) {
   return (
     <div className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-indigo-500 space-y-2 hover:shadow-lg transition-shadow">
-      <h2 className="text-xl font-bold text-indigo-800">
-        {candidate.title}
-      </h2>
+      <div className="flex items-start justify-between gap-2">
+        <h2 className="text-xl font-bold text-indigo-800">
+          {candidate.title}
+        </h2>
+        {candidate.score !== undefined && (
+          <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded-full ${
+            candidate.score >= 7 ? "bg-green-100 text-green-700" :
+            candidate.score >= 4 ? "bg-yellow-100 text-yellow-700" :
+            "bg-gray-100 text-gray-500"
+          }`}>
+            {candidate.score}/9
+          </span>
+        )}
+      </div>
 
       {candidate.location && (
         <p className="text-sm text-gray-500">
