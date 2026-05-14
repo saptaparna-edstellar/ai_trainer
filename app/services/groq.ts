@@ -93,14 +93,19 @@ ${!requirements.experience ? `   Experience not required — skip, give +0` : ""
 
 TOTAL = sum of above (max 9)
 
---- MANDATORY EXCLUSION RULES (apply BEFORE scoring) ---
-1. EXCLUDE any profile that does NOT mention the required skills (${requirements.skills?.join(", ")}) anywhere in the title or description. Skills must actually appear — do not guess or assume.
-2. EXCLUDE any profile with NO training/coaching/instructing/facilitating role at all.
+--- MANDATORY EXCLUSION RULES (apply BEFORE scoring, no exceptions) ---
+1. EXCLUDE if the required skills (${requirements.skills?.join(", ")}) do NOT appear in the title or description. Must actually be mentioned — no guessing.
+2. EXCLUDE if location does NOT match "${requirements.location || "any"}". If location is unknown from the profile, still exclude.
+3. EXCLUDE if profile has NO training/coaching/instructing/facilitating role at all.
 
---- IMPORTANT RANKING RULES ---
-- A profile with 15 years MUST score higher than a profile with 20+ years when experience selected is "10+"
-- Profiles where About explicitly states years (e.g. "over 15 years") rank above profiles where experience is only inferred
-- Include up to 20 profiles — don't stop early, include everyone who passes the exclusion rules above
+Any profile that fails ANY of the above 3 rules must be removed — even if it scores well on other criteria.
+
+--- RANKING (after exclusion) ---
+- Top (score 7–9): matches skills + location + experience + industry + keywords — almost all criteria
+- Middle (score 4–6): matches skills + location + experience, missing industry or keywords
+- Bottom (score 1–3): matches skills + location only, experience/industry/keywords unknown or missing
+- A profile with 15 years MUST score higher than 20+ years when experience selected is "10+"
+- Include up to 20 profiles — include everyone who passed the exclusion rules
 
 Profiles:
 ${JSON.stringify(profiles, null, 2)}
