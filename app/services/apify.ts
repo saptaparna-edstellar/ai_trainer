@@ -29,7 +29,7 @@ export async function searchLinkedInProfiles(data: any) {
 
     console.log("JOB TITLES:", jobTitles);
 
-    // Query 1: all criteria — skills + job titles + location + industry + experience
+    // Query 1: most specific — all criteria
     const query1 = [
       "site:linkedin.com/in/",
       ...skills,
@@ -39,7 +39,7 @@ export async function searchLinkedInProfiles(data: any) {
       experienceTerm,
     ].filter(Boolean).join(" ");
 
-    // Query 2: skills + location + experience (no industry)
+    // Query 2: skills + location + experience (no industry — slightly broader)
     const query2 = [
       "site:linkedin.com/in/",
       ...skills,
@@ -48,7 +48,7 @@ export async function searchLinkedInProfiles(data: any) {
       experienceTerm,
     ].filter(Boolean).join(" ");
 
-    // Query 3: broad fallback — skills + trainer + location or keywords
+    // Query 3: broad fallback — skills + trainer + location only, always returns results
     const query3 = [
       "site:linkedin.com/in/",
       "trainer",
@@ -65,7 +65,7 @@ export async function searchLinkedInProfiles(data: any) {
       .actor("apify/google-search-scraper")
       .call({
         queries: `${query1}\n${query2}\n${query3}`,
-        maxPagesPerQuery: 2,
+        maxPagesPerQuery: 3,
         resultsPerPage: 10,
         mobileResults: false,
         languageCode: "en",
@@ -82,7 +82,7 @@ export async function searchLinkedInProfiles(data: any) {
       .map((r: any) => ({
         title: r.title || "",
         url: r.url || "",
-        description: String(r.description || "").slice(0, 300),
+        description: String(r.description || "").slice(0, 600),
         location: "",
         skills: [],
         experience: [],

@@ -13,9 +13,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, profiles: [] });
     }
 
-    const profiles = rawProfiles.length >= 10
+    const profiles = rawProfiles.length
       ? await filterCandidates({ profiles: rawProfiles, requirements: body })
-      : rawProfiles;
+      : [];
 
     console.log("FILTERED PROFILES:", profiles.length);
 

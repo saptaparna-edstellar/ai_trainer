@@ -35,40 +35,78 @@ export async function filterCandidates({
   profiles: any[];
   requirements: any;
 }) {
-  const criteria = [
-    `Skills: ${requirements.skills?.join(", ")}`,
-    requirements.experience ? `Experience: ${requirements.experience} years in training (match if profile shows AT LEAST this much experience)` : "",
-    requirements.location ? `Location: ${requirements.location}` : "",
-    requirements.industry ? `Industry: ${requirements.industry}` : "",
-    requirements.keywords ? `Keywords: ${requirements.keywords}` : "",
-  ].filter(Boolean).join("\n");
+  const expLabel: Record<string, string> = {
+    fresher: "0–1 years",
+    "5+": "5 or more years",
+    "10+": "10 or more years",
+    "20+": "20 or more years",
+  };
+  const expText = requirements.experience ? expLabel[requirements.experience] ?? requirements.experience : null;
 
   const message = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 3000,
+    max_tokens: 5000,
     messages: [
       {
         role: "user",
-        content: `You are a recruiter scoring LinkedIn trainer profiles.
+        content: `You are a recruiter ranking LinkedIn trainer profiles. Assign a score 0–9 to each profile and return them sorted highest first.
 
-Requirements:
-${criteria}
+Search requirements:
+- Skills: ${requirements.skills?.join(", ")}
+${requirements.location ? `- Location: ${requirements.location}` : ""}
+${expText ? `- Experience: ${expText}` : ""}
+${requirements.industry ? `- Industry: ${requirements.industry}` : ""}
+${requirements.keywords ? `- Keywords: ${requirements.keywords}` : ""}
 
-Score each profile (0-9) based on how many criteria match from the profile title/description:
-- Skills match: +3 points
-- Location match: +2 points
-- Experience level match: +2 points
-- Industry match: +1 point
-- Keywords match: +1 point
+--- SCORING BREAKDOWN (add up points, max 9) ---
 
-Rules:
-- Only include trainers, instructors, coaches, facilitators — exclude pure developers/engineers with no training role
-- Return up to 20 profiles sorted by score descending (best match first)
+1. SKILLS (0–3 pts):
+   +3 if skills clearly match
+   +1–2 if partially match
+   +0 if no match
+
+2. LOCATION (0–2 pts):
+   +2 if location matches
+   +0 if doesn't match or unknown
+
+3. EXPERIENCE (0–2 pts) — READ CAREFULLY:
+${requirements.experience === "fresher" ? `   +2 if profile shows 0–2 years training experience  ← BEST
+   +1 if profile shows 3–5 years training experience
+   +0 if profile shows 6+ years OR no training role` : ""}
+${requirements.experience === "5+" ? `   +2 if profile shows 5–9 years training experience  ← BEST
+   +1 if profile shows 10–15 years (acceptable but over-qualified)
+   +0 if profile shows 16+ years OR less than 5 years` : ""}
+${requirements.experience === "10+" ? `   +2 if profile shows 10–19 years training experience  ← BEST (e.g. "15 years" fits here)
+   +1 if profile shows 20+ years (acceptable but over-qualified)
+   +0 if profile shows less than 10 years` : ""}
+${requirements.experience === "20+" ? `   +2 if profile shows 20+ years training experience  ← BEST
+   +1 if profile shows 15–19 years (close)
+   +0 if profile shows less than 15 years` : ""}
+${!requirements.experience ? `   Experience not required — skip, give +0` : ""}
+
+4. INDUSTRY (0–1 pt — only score if industry was provided):
+   +1 if profile mentions or works in the specified industry
+   +0 if industry doesn't match or not mentioned
+
+5. KEYWORDS (0–1 pt — only if keywords were provided):
+   +1 if keywords appear in profile
+
+TOTAL = sum of above (max 9)
+
+--- MANDATORY EXCLUSION RULES (apply BEFORE scoring) ---
+1. EXCLUDE any profile that does NOT mention the required skills (${requirements.skills?.join(", ")}) anywhere in the title or description. Skills must actually appear — do not guess or assume.
+2. EXCLUDE any profile with NO training/coaching/instructing/facilitating role at all.
+
+--- IMPORTANT RANKING RULES ---
+- A profile with 15 years MUST score higher than a profile with 20+ years when experience selected is "10+"
+- Profiles where About explicitly states years (e.g. "over 15 years") rank above profiles where experience is only inferred
+- Include up to 20 profiles — don't stop early, include everyone who passes the exclusion rules above
 
 Profiles:
 ${JSON.stringify(profiles, null, 2)}
 
-Return ONLY a JSON array sorted by score: [{"title": "...", "url": "...", "description": "...", "score": 7}]`,
+Return ONLY a JSON array sorted by score descending:
+[{"title": "...", "url": "...", "description": "...", "score": 8}]`,
       },
     ],
   });
