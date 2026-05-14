@@ -15,7 +15,7 @@ export default function CandidateCard({
             candidate.score >= 4 ? "bg-yellow-100 text-yellow-700" :
             "bg-gray-100 text-gray-500"
           }`}>
-            {candidate.score}/9
+            {candidate.score}
           </span>
         )}
       </div>
