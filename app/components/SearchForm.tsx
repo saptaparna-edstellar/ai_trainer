@@ -107,7 +107,7 @@ export default function SearchForm() {
 
         <input
           type="text"
-          placeholder="Keywords"
+          placeholder="Description"
           className="border border-gray-200 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent bg-gray-50"
           value={formData.keywords}
           onChange={(e) =>

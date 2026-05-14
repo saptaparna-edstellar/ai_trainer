@@ -7,15 +7,17 @@ const client = new OpenAI({
 
 const MODEL = "llama-3.3-70b-versatile";
 
-export async function generateJobTitles(skills: string[]): Promise<string[]> {
+export async function generateJobTitles(skills: string[], description: string = ""): Promise<string[]> {
   const completion = await client.chat.completions.create({
     model: MODEL,
-    max_tokens: 200,
+    max_tokens: 300,
     temperature: 0.3,
     messages: [
       {
         role: "user",
-        content: `List 6 LinkedIn job titles for a trainer who teaches: ${skills.join(", ")}.
+        content: `Generate 8 LinkedIn job titles for professionals who work with: ${skills.join(", ")}.${description ? ` Context: ${description}` : ""}
+
+Include a diverse mix: trainers, instructors, coaches, consultants, facilitators, subject matter experts, compliance leads, and advisors.
 Return ONLY a JSON array like: ["Title 1", "Title 2"]. No explanation.`,
       },
     ],
@@ -23,12 +25,12 @@ Return ONLY a JSON array like: ["Title 1", "Title 2"]. No explanation.`,
 
   const content = completion.choices[0].message.content || "";
   const match = content.match(/\[[\s\S]*\]/);
-  if (!match) return ["Trainer"];
+  if (!match) return ["Trainer", "Consultant", "Coach"];
   try {
     const titles = JSON.parse(match[0]);
-    return Array.isArray(titles) ? titles : ["Trainer"];
+    return Array.isArray(titles) ? titles : ["Trainer", "Consultant", "Coach"];
   } catch {
-    return ["Trainer"];
+    return ["Trainer", "Consultant", "Coach"];
   }
 }
 
@@ -46,35 +48,47 @@ export async function filterCandidates({
     "20+": "20 or more years",
   };
   const expText = requirements.experience ? expLabel[requirements.experience] ?? requirements.experience : null;
+  const description = requirements.keywords || "";
 
   const completion = await client.chat.completions.create({
     model: MODEL,
-    max_tokens: 4000,
+    max_tokens: 3000,
     temperature: 0.1,
     messages: [
       {
         role: "user",
-        content: `You are filtering LinkedIn profiles to find trainers.
+        content: `You are a senior recruiter filtering LinkedIn profiles.
 
-THREE REQUIRED CRITERIA — a profile must pass ALL three to be included:
-1. TRAINER: The person must be a trainer, instructor, coach, or facilitator. Not a developer, manager, or salesperson unless they explicitly train others in the skill.
-2. SKILL: The person must teach or train specifically in: ${requirements.skills?.join(", ")}. A yoga trainer, sales trainer, or soft-skills coach does NOT count unless they also train in these skills.
-3. LOCATION: The person must be based in or near: ${requirements.location || "anywhere"}. If location is clearly different, exclude them. If location is unknown from the snippet, keep them.
+VALID PROFESSIONAL ROLES: trainers, instructors, coaches, facilitators, consultants, subject matter experts (SMEs), compliance leads, advisors, and anyone who actively works with or teaches the required skills. Do not restrict to "trainer" title alone.
 
-If a profile fails ANY of the three criteria above — remove it completely.
+PRIMARY FILTER — only exclude a profile if BOTH of the following are true simultaneously:
+- Zero relevance to the skills: ${requirements.skills?.join(", ")}
+- AND location is clearly a different country/region with no connection to ${requirements.location || "anywhere"}
 
-AFTER filtering, rank the remaining profiles by how many additional criteria they match:
-${expText ? `- Training experience is ${expText}: +2 if matches, +1 if close, +0 if not` : ""}
+If either condition is absent, keep the profile. Err on the side of inclusion.
+
+LOCATION RULE: Include profiles in or near ${requirements.location || "anywhere"}. If location cannot be determined from the snippet, keep the profile.
+
+DESCRIPTION CONTEXT: The recruiter is looking for: "${description}". Use this to understand the professional type needed and semantically boost matching profiles. This guides ranking, not hard filtering.
+
+SCORING (assign 1–10):
+- 8–10: Matches skills + location + description context + experience + industry (strong all-round)
+- 5–7: Matches skills + location + partial description relevance or partial experience/industry
+- 2–4: Matches skills + location; description relevance weak or unclear
+- 1: Partial match on skills or location but has some professional relevance
+
+GOAL: Return up to 20 profiles. At least 2 must score 8 or higher. Do not drop borderline profiles.
+
+Bonus scoring:
+${expText ? `- Experience is ${expText}: +2 if matches, +1 if roughly close` : ""}
 ${requirements.industry ? `- Industry is ${requirements.industry}: +1 if mentioned` : ""}
-${requirements.keywords ? `- Keywords ${requirements.keywords}: +1 if mentioned` : ""}
+${description ? `- Description match "${description}": +2 if closely matches the professional context, +1 if partial` : ""}
 
-Return up to 20 profiles sorted best match first. Include ALL that pass the three criteria — do not drop valid profiles.
+Profiles (up to 40):
+${JSON.stringify(profiles.slice(0, 40))}
 
-Profiles:
-${JSON.stringify(profiles, null, 2)}
-
-Return ONLY a JSON array:
-[{"title": "...", "url": "...", "description": "...", "score": 7}]`,
+Return ONLY a valid JSON array sorted by score descending:
+[{"title": "...", "url": "...", "description": "...", "score": 8}]`,
       },
     ],
   });
