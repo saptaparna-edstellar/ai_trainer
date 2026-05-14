@@ -74,7 +74,7 @@ export default function Home() {
         <h1 className="text-4xl font-bold mb-2 text-indigo-700">
           AI Trainer Sourcing
         </h1>
-        <p className="text-gray-500 mb-8">Find the right trainers powered by AI</p>
+        {/* <p className="text-gray-500 mb-8">Find the right trainers powered by AI</p> */}
 
         <SearchForm />
       </div>
