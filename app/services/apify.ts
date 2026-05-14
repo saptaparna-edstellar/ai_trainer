@@ -42,8 +42,8 @@ export async function searchLinkedInProfiles(data: any) {
     const domainTerms = description
       ? description
           .split(/\s+/)
-          .map((w) => w.replace(/[^a-zA-Z0-9]/g, ""))
-          .filter((w) => w.length > 2 && !STRIP_WORDS.has(w.toLowerCase()))
+          .map((w: string) => w.replace(/[^a-zA-Z0-9]/g, ""))
+          .filter((w: string) => w.length > 2 && !STRIP_WORDS.has(w.toLowerCase()))
           .slice(0, 6)
           .join(" ")
       : "";
