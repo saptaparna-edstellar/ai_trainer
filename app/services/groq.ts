@@ -59,25 +59,24 @@ export async function filterCandidates({
         role: "user",
         content: `You are a senior recruiter filtering LinkedIn profiles.
 
-VALID PROFESSIONAL ROLES: trainers, instructors, coaches, facilitators, consultants, subject matter experts (SMEs), compliance leads, advisors, and anyone who actively works with or teaches the required skills. Do not restrict to "trainer" title alone.
+ROLE INTENT: The recruiter is looking for: "${description}".
+Extract the intended role type from this description (e.g. "trainer", "consultant", "coach"). A profile must show evidence of that role — not just domain knowledge. A compliance officer or engineer who only does compliance work but does NOT train or teach others is NOT a match when the description says "trainer". A consultant who also trains is a match. A coach who teaches the topic is a match.
 
-PRIMARY FILTER — only exclude a profile if BOTH of the following are true simultaneously:
-- Zero relevance to the skills: ${requirements.skills?.join(", ")}
-- AND location is clearly a different country/region with no connection to ${requirements.location || "anywhere"}
+SKILLS: The person must have relevance to: ${requirements.skills?.join(", ")}. Domain experts in adjacent but unrelated fields should score low.
 
-If either condition is absent, keep the profile. Err on the side of inclusion.
+LOCATION: Include profiles in or near ${requirements.location || "anywhere"}. If location is unknown from the snippet, keep the profile. Only exclude if the location is clearly a different region with no connection.
 
-LOCATION RULE: Include profiles in or near ${requirements.location || "anywhere"}. If location cannot be determined from the snippet, keep the profile.
+EXCLUSION RULE — remove a profile only if it meets ALL of:
+- No relevance to the required skills
+- Clearly wrong location
+- No evidence of the role type described
 
-DESCRIPTION CONTEXT: The recruiter is looking for: "${description}". Use this to understand the professional type needed and semantically boost matching profiles. This guides ranking, not hard filtering.
+SCORING (assign 2–10; do not assign 1 — if a profile is that marginal, exclude it):
+- 8–10: Strong match on skills + location + role type from description + experience + industry
+- 5–7: Matches skills + location + role type, partial on experience/industry
+- 2–4: Matches skills + location but role type is unclear or only partially evident
 
-SCORING (assign 1–10):
-- 8–10: Matches skills + location + description context + experience + industry (strong all-round)
-- 5–7: Matches skills + location + partial description relevance or partial experience/industry
-- 2–4: Matches skills + location; description relevance weak or unclear
-- 1: Partial match on skills or location but has some professional relevance
-
-GOAL: Return up to 20 profiles. At least 2 must score 8 or higher. Do not drop borderline profiles.
+GOAL: Return up to 20 profiles. At least 2 must score 8 or higher. Keep the list tight — a shorter accurate list beats a long irrelevant one.
 
 Bonus scoring:
 ${expText ? `- Experience is ${expText}: +2 if matches, +1 if roughly close` : ""}
@@ -98,7 +97,11 @@ Return ONLY a valid JSON array sorted by score descending:
   if (!match) return [];
   try {
     const parsed = JSON.parse(match[0]);
-    return Array.isArray(parsed) ? parsed.sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0)) : [];
+    return Array.isArray(parsed)
+      ? parsed
+          .filter((p: any) => (p.score ?? 0) >= 2)
+          .sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0))
+      : [];
   } catch {
     return [];
   }

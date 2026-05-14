@@ -31,12 +31,24 @@ export async function searchLinkedInProfiles(data: any) {
 
     const broadRoles = "(trainer OR instructor OR coach OR consultant OR facilitator OR \"subject matter expert\" OR advisor OR specialist OR expert)";
 
-    // Key terms from description (first 8 words) for semantic queries
-    const descTerms = description
-      ? description.split(/\s+/).slice(0, 8).join(" ")
+    // Strip role/filler/seniority words from description — keep only domain terms for queries
+    const STRIP_WORDS = new Set([
+      "experienced", "experience", "with", "expertise", "in", "the", "a", "an",
+      "and", "or", "of", "for", "who", "has", "have", "worked", "years", "year",
+      "senior", "junior", "seasoned", "professional", "seeking", "looking",
+      "trainer", "instructor", "coach", "consultant", "facilitator", "advisor",
+      "specialist", "expert", "lead", "manager", "director", "officer",
+    ]);
+    const domainTerms = description
+      ? description
+          .split(/\s+/)
+          .map((w) => w.replace(/[^a-zA-Z0-9]/g, ""))
+          .filter((w) => w.length > 2 && !STRIP_WORDS.has(w.toLowerCase()))
+          .slice(0, 6)
+          .join(" ")
       : "";
 
-    // Query 1: most specific — all criteria + description context
+    // Query 1: most specific — all criteria
     const query1 = [
       "site:linkedin.com/in/",
       ...skills,
@@ -44,7 +56,6 @@ export async function searchLinkedInProfiles(data: any) {
       location,
       industry,
       experienceTerm,
-      descTerms,
     ].filter(Boolean).join(" ");
 
     // Query 2: skills + broad professional roles + location + experience
@@ -56,26 +67,23 @@ export async function searchLinkedInProfiles(data: any) {
       experienceTerm,
     ].filter(Boolean).join(" ");
 
-    // Query 3: description-semantic — key terms from description drive the search
-    const query3 = descTerms
+    // Query 3: domain terms from description (role words stripped) + location + role hint
+    // This surfaces professionals in the domain without role word confusion
+    const query3 = (domainTerms || skills.join(" "))
       ? [
           "site:linkedin.com/in/",
-          descTerms,
+          domainTerms || skills.join(" "),
           location,
-          "(trainer OR consultant OR coach OR expert OR specialist OR facilitator)",
+          "(trainer OR instructor OR coach OR consultant OR facilitator)",
         ].filter(Boolean).join(" ")
-      : [
-          "site:linkedin.com/in/",
-          ...skills,
-          location,
-          "(consultant OR SME OR expert OR specialist)",
-        ].filter(Boolean).join(" ");
+      : query2;
 
-    // Query 4: pure broad fallback — skills + location only, maximises recall
+    // Query 4: broad fallback — skills + location + minimal role hint to avoid totally irrelevant profiles
     const query4 = [
       "site:linkedin.com/in/",
       ...skills,
       location,
+      "(trainer OR instructor OR consultant OR expert)",
     ].filter(Boolean).join(" ");
 
     console.log("QUERY 1:", query1);
