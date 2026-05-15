@@ -29,7 +29,7 @@ export async function searchLinkedInProfiles(data: any) {
 
     console.log("JOB TITLES:", jobTitles);
 
-    const broadRoles = "(trainer OR instructor OR coach OR consultant OR facilitator OR \"subject matter expert\" OR advisor OR specialist OR expert)";
+    const teachingRoles = "(trainer OR instructor OR coach OR consultant OR facilitator OR mentor)";
 
     // Strip role/filler/seniority words from description — keep only domain terms for queries
     const STRIP_WORDS = new Set([
@@ -58,32 +58,29 @@ export async function searchLinkedInProfiles(data: any) {
       experienceTerm,
     ].filter(Boolean).join(" ");
 
-    // Query 2: skills + broad professional roles + location + experience
+    // Query 2: skills + teaching roles + location + experience
     const query2 = [
       "site:linkedin.com/in/",
       ...skills,
-      broadRoles,
+      teachingRoles,
       location,
       experienceTerm,
     ].filter(Boolean).join(" ");
 
-    // Query 3: domain terms from description (role words stripped) + location + role hint
-    // This surfaces professionals in the domain without role word confusion
-    const query3 = (domainTerms || skills.join(" "))
-      ? [
-          "site:linkedin.com/in/",
-          domainTerms || skills.join(" "),
-          location,
-          "(trainer OR instructor OR coach OR consultant OR facilitator)",
-        ].filter(Boolean).join(" ")
-      : query2;
+    // Query 3: skills + teaching roles + location + description context
+    const query3 = [
+      "site:linkedin.com/in/",
+      domainTerms || skills.join(" "),
+      location,
+      teachingRoles,
+    ].filter(Boolean).join(" ");
 
-    // Query 4: broad fallback — skills + location + minimal role hint to avoid totally irrelevant profiles
+    // Query 4: simplest fallback — skills + location + teaching role
     const query4 = [
       "site:linkedin.com/in/",
       ...skills,
       location,
-      "(trainer OR instructor OR consultant OR expert)",
+      "(trainer OR coach OR consultant)",
     ].filter(Boolean).join(" ");
 
     console.log("QUERY 1:", query1);

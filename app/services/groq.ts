@@ -17,7 +17,7 @@ export async function generateJobTitles(skills: string[], description: string = 
         role: "user",
         content: `Generate 8 LinkedIn job titles for professionals who work with: ${skills.join(", ")}.${description ? ` Context: ${description}` : ""}
 
-Include a diverse mix: trainers, instructors, coaches, consultants, facilitators, subject matter experts, compliance leads, and advisors.
+Include only roles where the person teaches, trains, coaches, or advises others — trainers, instructors, coaches, consultants, facilitators, mentors. No engineers, developers, or employees who just use the skill.
 Return ONLY a JSON array like: ["Title 1", "Title 2"]. No explanation.`,
       },
     ],
@@ -59,24 +59,20 @@ export async function filterCandidates({
         role: "user",
         content: `You are a senior recruiter filtering LinkedIn profiles.
 
-ROLE INTENT: The recruiter is looking for: "${description}".
-Extract the intended role type from this description (e.g. "trainer", "consultant", "coach"). A profile must show evidence of that role — not just domain knowledge. A compliance officer or engineer who only does compliance work but does NOT train or teach others is NOT a match when the description says "trainer". A consultant who also trains is a match. A coach who teaches the topic is a match.
+HARD RULE — remove any profile where the person is a pure practitioner (engineer, developer, employee) who just uses the skill but does NOT teach, train, coach, consult, or guide others. A consultant who advises others is valid. A coach is valid. A trainer is valid. A freelance Java developer who builds apps is NOT valid.
 
-SKILLS: The person must have relevance to: ${requirements.skills?.join(", ")}. Domain experts in adjacent but unrelated fields should score low.
+SKILLS: The person must work with: ${requirements.skills?.join(", ")}.
 
-LOCATION: Include profiles in or near ${requirements.location || "anywhere"}. If location is unknown from the snippet, keep the profile. Only exclude if the location is clearly a different region with no connection.
+LOCATION: ${requirements.location || "anywhere"} — if unknown from snippet, keep the profile.
 
-EXCLUSION RULE — remove a profile only if it meets ALL of:
-- No relevance to the required skills
-- Clearly wrong location
-- No evidence of the role type described
+DESCRIPTION CONTEXT: "${description || ""}" — use this to understand what kind of professional is needed and boost matching profiles.
 
-SCORING (assign 2–10; do not assign 1 — if a profile is that marginal, exclude it):
-- 8–10: Strong match on skills + location + role type from description + experience + industry
-- 5–7: Matches skills + location + role type, partial on experience/industry
-- 2–4: Matches skills + location but role type is unclear or only partially evident
+SCORING (2–10):
+- 7–10: Teaches/trains/coaches/consults others in the skill + location match + ${expText ? `experience ${expText}` : "any experience"} + ${requirements.industry ? `industry ${requirements.industry}` : "any industry"}
+- 4–6: Teaches/trains/coaches/consults others + location match, other filters partial or unknown
+- 2–3: Teaches/trains/coaches/consults others + location uncertain
 
-GOAL: Return up to 20 profiles. At least 2 must score 8 or higher. Keep the list tight — a shorter accurate list beats a long irrelevant one.
+GOAL: Return exactly 20 profiles (all that pass the hard rule, padded to 20 with lower scores if needed).
 
 Bonus scoring:
 ${expText ? `- Experience is ${expText}: +2 if matches, +1 if roughly close` : ""}
