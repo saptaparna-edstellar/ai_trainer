@@ -70,11 +70,10 @@ import SearchForm from "@/app/components/SearchForm";
 export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-10">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-4xl font-bold mb-2 text-indigo-700">
-          AI Trainer Sourcing
-        </h1>
-        {/* <p className="text-gray-500 mb-8">Find the right trainers powered by AI</p> */}
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-indigo-700">Trainer Finder</h1>
+        </div>
 
         <SearchForm />
       </div>
