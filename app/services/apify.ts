@@ -21,7 +21,15 @@ export async function searchLinkedInProfiles(data: any) {
     const location = data.location || "";
     const city = location.split(",")[0].trim();
     const cityQ = city ? `"${city}"` : "";
-    const skillsQ = skills.map((s: string) => `"${s}"`).join(" ");
+    const GENERIC = new Set(["european","regulation","regulations","system","systems","standard","standards","management","international","national","global","advanced","basic","general","technology","technologies","framework","directive","directives","guidelines"]);
+    const skillsQ = skills.map((s: string) => {
+      const words = s.trim().split(/\s+/);
+      if (words.length === 1) return `"${s}"`;
+      const acronyms = words.filter(w => w.length >= 2 && /^[A-Z][A-Z0-9]*$/.test(w));
+      if (acronyms.length > 0) return acronyms.map(w => `"${w}"`).join(" ");
+      const key = words.filter(w => !GENERIC.has(w.toLowerCase()));
+      return (key.length > 0 ? key : words).slice(0, 2).map(w => `"${w}"`).join(" ");
+    }).join(" ");
     const industry = data.industry || "";
     const experienceTerm = experienceToSearchTerm(data.experience || "");
     const description = data.keywords || "";
