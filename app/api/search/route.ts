@@ -13,11 +13,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, profiles: [] });
     }
 
-    const profiles = rawProfiles.length
-      ? await filterCandidates({ profiles: rawProfiles, requirements: body })
-      : [];
+    const top5 = await filterCandidates({ profiles: rawProfiles, requirements: body });
+    const top5Urls = new Set(top5.map((p: any) => p.url));
+    const rest = rawProfiles.filter((p: any) => !top5Urls.has(p.url));
+    const profiles = [...top5, ...rest];
 
-    console.log("FILTERED PROFILES:", profiles.length);
+    console.log("TOP MATCHES:", top5.length, "TOTAL:", profiles.length);
 
     return NextResponse.json({ success: true, profiles });
   } catch (error: any) {
