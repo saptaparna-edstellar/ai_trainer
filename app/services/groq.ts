@@ -57,19 +57,29 @@ export async function filterCandidates({
     messages: [
       {
         role: "user",
-        content: `You are a recruiter. From the profiles below, pick the TOP 5 that best match ALL of these criteria:
-- Skills: ${requirements.skills?.join(", ")}
-- Location: ${requirements.location || "anywhere"}
-${description ? `- Description context: "${description}"` : ""}
-${expText ? `- Experience: ${expText}` : ""}
-${requirements.industry ? `- Industry: ${requirements.industry}` : ""}
+        content: `You are a recruiter. Pick the TOP 5 LinkedIn profiles that match ALL THREE of these together:
+1. SKILL: ${requirements.skills?.join(", ")}
+2. LOCATION: ${requirements.location || "anywhere"}
+3. ROLE: trainer, coach, instructor, consultant, faculty, facilitator, or advisor (someone who teaches others)
 
-A good match has:
-1. The skill (or closely related term) visible in title or snippet
-2. The location matching (or no location mentioned — that's OK)
-3. A teaching/training/consulting role (trainer, coach, consultant, instructor, faculty, advisor)
+All three carry equal weight. A profile missing ANY ONE of these three gets a low score.
 
-Return ONLY the top 5 as a JSON array sorted best first. Each must have a score 1–10.
+SCORING:
+- 9–10: Skill confirmed + Location confirmed (${requirements.location}) + Trainer role confirmed${description ? ` + context "${description}" matches` : ""}${expText ? ` + experience ${expText} matches` : ""}
+- 7–8: Two of the three confirmed, third is possible but unclear from snippet
+- 5–6: Only skill confirmed, location and role unclear from snippet (no wrong signals)
+- 2–4: One confirmed but others missing or unclear
+- 1: Location is CLEARLY WRONG (snippet says a different country/city — e.g. target is Germany but snippet says India or USA)
+
+EXAMPLES of score 1 (wrong location): target "Germany" but snippet says "India", "Mumbai", "Bangalore", "United States", "UK" → score 1
+EXAMPLES of score 9–10: snippet confirms "${requirements.location}" + mentions the skill + title says "trainer" or "consultant"
+
+${description ? `Prefer profiles matching this context: "${description}"` : ""}
+${expText ? `Prefer profiles with ${expText} experience.` : ""}
+${requirements.industry ? `Prefer profiles mentioning ${requirements.industry}.` : ""}
+
+Return ONLY the TOP 5 as a JSON array sorted best first:
+[{"title":"...","url":"...","description":"...","score":9}]
 
 Profiles:
 ${JSON.stringify(profiles.slice(0, 79))}
