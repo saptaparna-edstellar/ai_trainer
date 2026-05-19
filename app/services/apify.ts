@@ -19,6 +19,9 @@ export async function searchLinkedInProfiles(data: any) {
   try {
     const skills = (data.skills as string[]).filter(Boolean);
     const location = data.location || "";
+    const city = location.split(",")[0].trim();
+    const cityQ = city ? `"${city}"` : "";
+    const skillsQ = skills.map((s: string) => `"${s}"`).join(" ");
     const industry = data.industry || "";
     const experienceTerm = experienceToSearchTerm(data.experience || "");
     const description = data.keywords || "";
@@ -48,38 +51,36 @@ export async function searchLinkedInProfiles(data: any) {
           .join(" ")
       : "";
 
-    // Query 1: most specific — all criteria
+    // Query 1: skills + job titles + city (quoted required terms)
     const query1 = [
       "site:linkedin.com/in/",
-      ...skills,
-      `(${jobTitles.slice(0, 6).join(" OR ")})`,
-      location,
-      industry,
-      experienceTerm,
+      skillsQ,
+      `(${jobTitles.slice(0, 3).join(" OR ")})`,
+      cityQ,
     ].filter(Boolean).join(" ");
 
-    // Query 2: skills + teaching roles + location + experience
+    // Query 2: skills + teaching roles + city + experience
     const query2 = [
       "site:linkedin.com/in/",
-      ...skills,
+      skillsQ,
       teachingRoles,
-      location,
+      cityQ,
       experienceTerm,
     ].filter(Boolean).join(" ");
 
-    // Query 3: skills + teaching roles + location + description context
+    // Query 3: domain terms + city + teaching role
     const query3 = [
       "site:linkedin.com/in/",
-      domainTerms || skills.join(" "),
-      location,
+      domainTerms ? `"${domainTerms.split(" ").join('" "')}"` : skillsQ,
+      cityQ,
       teachingRoles,
     ].filter(Boolean).join(" ");
 
-    // Query 4: simplest fallback — skills + location + teaching role
+    // Query 4: simplest fallback — skills + city + trainer
     const query4 = [
       "site:linkedin.com/in/",
-      ...skills,
-      location,
+      skillsQ,
+      cityQ,
       "(trainer OR coach OR consultant)",
     ].filter(Boolean).join(" ");
 

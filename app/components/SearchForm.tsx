@@ -57,7 +57,7 @@ export default function SearchForm() {
   }
 
   function selectLocation(item: { label: string; value: string }) {
-    setFormData((prev) => ({ ...prev, location: item.label }));
+    setFormData((prev) => ({ ...prev, location: item.value }));
     setShowDropdown(false);
   }
 
